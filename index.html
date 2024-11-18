@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"> <!-- Tailwind CSS CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <script defer src="main.js"></script>
@@ -19,8 +19,10 @@
         <h2 class="text-2xl mb-4">Add Expense</h2>
         <form id="expense-form" class="flex flex-col">
             <div class="flex flex-col sm:flex-row mb-4 space-y-4 sm:space-y-0 sm:space-x-2">
-                <input type="number" id="amount" placeholder="Amount" required class="flex-1 border border-gray-300 p-2 rounded">
-                <input type="text" id="category" placeholder="Category" required class="flex-1 border border-gray-300 p-2 rounded">
+                <input type="number" id="amount" placeholder="Amount" required
+                       class="flex-1 border border-gray-300 p-2 rounded">
+                <input type="text" id="category" placeholder="Category" required
+                       class="flex-1 border border-gray-300 p-2 rounded">
                 <input type="date" id="date" required class="flex-1 border border-gray-300 p-2 rounded">
             </div>
             <button type="submit" class="bg-green-500 text-white py-2 rounded hover:bg-green-600">Add Expense</button>
@@ -40,7 +42,23 @@
 <div id="network-status" class="text-center py-2">
     <p id="status-text" class="text-green-500">You are online</p>
 </div>
+<section class="bg-white p-6 rounded shadow-lg space-y-4">
+    <h2 class="text-2xl font-semibold text-gray-800">Summary</h2>
+    <p class="text-gray-600">Get a quick overview of your expenses with a single click.</p>
+    <button id="view-summary" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 ease-in-out">
+        View Summary
+    </button>
+</section>
 
+<div id="summary-view" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Expense Summary</h2>
+        <ul id="summary-list" class="list-disc pl-5 space-y-2 text-gray-700"></ul>
+        <button id="close-summary" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200 ease-in-out mt-6">
+            Close Summary
+        </button>
+    </div>
+</div>
 <footer class="bg-blue-600 text-white text-center p-4">
     <p>&copy; 2024 Expense Tracker</p>
 </footer>
