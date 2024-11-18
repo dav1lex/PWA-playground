@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
     <script defer src="main.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100 text-gray-800">
@@ -15,6 +16,14 @@
 </header>
 
 <main class="flex-grow max-w-3xl mx-auto p-4 space-y-6">
+    <!--    check ios-->
+    <div id="ios-install-banner" style="display: none; background: #ffcc00; padding: 10px;">
+        <p>
+            For iOS:to install this app, tap the <strong>Share</strong> icon at the bottom of the screen
+            and select <strong>Add to Home Screen</strong>. <strong>Geolocation</strong> can not be used on iOS devices.
+        </p>
+    </div>
+    <!--    check ios-->
     <section class="bg-white p-6 rounded shadow mb-4">
         <h2 class="text-2xl mb-4">Add Expense</h2>
         <form id="expense-form" class="flex flex-col">
@@ -35,8 +44,8 @@
     </section>
 
     <section class="bg-white p-6 rounded shadow">
-        <h2 class="text-2xl mb-4">Total Expenses</h2>
-        <p id="total" class="text-xl font-bold">$0</p>
+        <h2 class="text-2xl mb-4">Total Expenses (in PLN)</h2>
+        <p id="total" class="text-xl font-bold">PLN 0</p>
     </section>
 </main>
 <div id="network-status" class="text-center py-2">
@@ -45,7 +54,8 @@
 <section class="bg-white p-6 rounded shadow-lg space-y-4">
     <h2 class="text-2xl font-semibold text-gray-800">Summary</h2>
     <p class="text-gray-600">Get a quick overview of your expenses with a single click.</p>
-    <button id="view-summary" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 ease-in-out">
+    <button id="view-summary"
+            class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 ease-in-out">
         View Summary
     </button>
 </section>
@@ -54,7 +64,8 @@
     <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">Expense Summary</h2>
         <ul id="summary-list" class="list-disc pl-5 space-y-2 text-gray-700"></ul>
-        <button id="close-summary" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200 ease-in-out mt-6">
+        <button id="close-summary"
+                class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200 ease-in-out mt-6">
             Close Summary
         </button>
     </div>
@@ -66,13 +77,15 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js')
-                .then((registration) => {
+                .then(registration => {
                     console.log('Service Worker registered with scope:', registration.scope);
                 })
-                .catch((error) => {
-                    console.log('Service Worker registration failed:', error);
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
                 });
         });
+    } else {
+        console.warn('Service Worker is not supported in this browser.');
     }
 </script>
 </body>

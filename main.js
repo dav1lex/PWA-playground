@@ -13,6 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('date');
     dateInput.value = new Date().toISOString().split('T')[0];
 });
+//check ios if yuer
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+if (isIos && isSafari) {
+    const banner = document.getElementById('ios-install-banner');
+    banner.style.display = 'block';
+}
 
 dbRequest.onupgradeneeded = (event) => {
     db = event.target.result;
@@ -59,21 +67,45 @@ function renderExpenses() {
 
     getAllRequest.onsuccess = () => {
         const expenses = getAllRequest.result;
+
         expenses.forEach((expense) => {
+            // Create a container for the expense item
             const li = document.createElement('li');
-            li.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
-            li.innerHTML = `
-                <span>${expense.category}: $${expense.amount.toFixed(2)} on ${expense.date} in ${expense.location.city || 'Unknown Location'}</span>
+            li.classList.add(
+                'flex', 'justify-between', 'items-center',
+                'p-4', 'mb-2', 'border', 'border-gray-300',
+                'rounded-lg', 'bg-white', 'shadow-sm'
+            );
+
+            // Create a div to display the expense details
+            const detailsDiv = document.createElement('div');
+            detailsDiv.classList.add('text-gray-700', 'font-medium', 'flex', 'flex-col');
+            detailsDiv.innerHTML = `
+                <span><strong>Category:</strong> ${expense.category}</span>
+                <span><strong>Amount:</strong> ${expense.amount.toFixed(2)} zł</span>
+                <span><strong>Date:</strong> ${expense.date}</span>
+                <span><strong>Location:</strong> ${expense.location.city || 'Unknown Location'}</span>
             `;
 
+            // Create a delete button
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Delete';
-            deleteButton.classList.add('bg-red-500', 'text-white', 'py-1', 'px-2', 'rounded', 'hover:bg-red-600');
+            deleteButton.classList.add(
+                'bg-red-500', 'text-white', 'py-1', 'px-3',
+                'rounded', 'font-bold', 'hover:bg-red-600',
+                'transition', 'duration-200', 'ease-in-out'
+            );
             deleteButton.addEventListener('click', () => deleteExpense(expense.id)); // Attach event handler
 
+            // Append the details and button to the list item
+            li.appendChild(detailsDiv);
             li.appendChild(deleteButton);
+
+            // Append the list item to the expenses list
             expensesList.appendChild(li);
         });
+
+        // Update the total expenses
         updateTotal();
     };
 }
@@ -230,7 +262,7 @@ document.getElementById('view-summary').addEventListener('click', () => {
 
         for (const [category, total] of Object.entries(categoryTotals)) {
             const li = document.createElement('li');
-            li.textContent = `${category}: $${total.toFixed(2)}`;
+            li.innerHTML = `${category} <strong>${total.toFixed(2)}</strong> PLN`;
             summaryList.appendChild(li);
         }
 
