@@ -1,7 +1,7 @@
 {
-  "name": "Expense Tracker",
-  "short_name": "Expense Tracker",
-  "description": "Track your expenses efficiently.",
+  "name": "Exercise Tracker",
+  "short_name": "Exercise Tracker",
+  "description": "Track your Exercises efficiently.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

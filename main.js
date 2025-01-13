@@ -1,39 +1,49 @@
-const dbRequest = indexedDB.open('ExpenseTrackerDB', 1);
+const dbRequest = indexedDB.open('ExerciseTrackerDB', 1);
 let db;
 
-const expenseForm = document.getElementById('expense-form');
-const amountInput = document.getElementById('amount');
-const categoryInput = document.getElementById('category');
-const dateInput = document.getElementById('date');
-const expensesList = document.getElementById('expenses');
-const totalDisplay = document.getElementById('total');
+const exerciseForm = document.getElementById('exercise-form');
+const exerciseInput = document.getElementById('exercise');
+const setsInput = document.getElementById('sets');
+const repsInput = document.getElementById('reps');
+const weekdayInput = document.getElementById('weekday');
+const exerciseWeekdays = document.getElementById('exercise-weekdays');
 
-//automatically set today's date into input
-document.addEventListener('DOMContentLoaded', () => {
-    const dateInput = document.getElementById('date');
-    dateInput.value = new Date().toISOString().split('T')[0];
-});
-//check ios if yuer
+const editExerciseForm = document.getElementById('edit-exercise-form');
+const editIdInput = document.getElementById('edit-id');
+const editExerciseInput = document.getElementById('edit-exercise');
+const editSetsInput = document.getElementById('edit-sets');
+const editRepsInput = document.getElementById('edit-reps');
+const editWeekdayInput = document.getElementById('edit-weekday');
+const editModal = document.getElementById('edit-exercise-modal');
+const infoModal = document.getElementById('info-exercise-modal');
+const infoDetails = document.getElementById('info-exercise-details');
+
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 if (isIos && isSafari) {
     const banner = document.getElementById('ios-install-banner');
-    banner.style.display = 'block';
+    if (banner) {
+        banner.classList.remove('hidden');
+    } else {
+        console.error("iOS install banner element not found");
+    }
 }
 
 dbRequest.onupgradeneeded = (event) => {
     db = event.target.result;
-    const objectStore = db.createObjectStore('expenses', {keyPath: 'id', autoIncrement: true});
-    objectStore.createIndex('category', 'category', {unique: false});
-    objectStore.createIndex('amount', 'amount', {unique: false});
-    objectStore.createIndex('date', 'date', {unique: false});
+    const objectStore = db.createObjectStore('exercises', { keyPath: 'id', autoIncrement: true });
+    objectStore.createIndex('exercise', 'exercise', { unique: false });
+    objectStore.createIndex('sets', 'sets', { unique: false });
+    objectStore.createIndex('reps', 'reps', { unique: false });
+    objectStore.createIndex('weekday', 'weekday', { unique: false });
+    objectStore.createIndex('isDone', 'isDone', { unique: false });
 };
 
 dbRequest.onsuccess = (event) => {
     db = event.target.result;
     console.log('Database opened successfully');
-    renderExpenses(); // Render expenses on DB connection
+    renderExercises(); // Render exercises on DB connection
 };
 
 dbRequest.onerror = (event) => {
@@ -42,84 +52,193 @@ dbRequest.onerror = (event) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateNetworkStatus();
-    expenseForm.addEventListener('submit', addExpense);
+    if (exerciseForm) {
+        exerciseForm.addEventListener('submit', addExercise);
+    } else {
+        console.error("Exercise form element not found");
+    }
+    if (editExerciseForm) {
+        editExerciseForm.addEventListener('submit', saveEditedExercise);
+    } else {
+        console.error("Edit exercise form element not found");
+    }
     window.addEventListener('online', updateNetworkStatus);
     window.addEventListener('offline', updateNetworkStatus);
+    enableDragAndDrop();
 });
 
-function updateTotal() {
-    const transaction = db.transaction('expenses', 'readonly');
-    const objectStore = transaction.objectStore('expenses');
+function renderExercises() {
+    if (!exerciseWeekdays) {
+        console.error("Exercise weekdays element not found");
+        return;
+    }
+    exerciseWeekdays.innerHTML = '';
+
+    const transaction = db.transaction('exercises', 'readonly');
+    const objectStore = transaction.objectStore('exercises');
     const getAllRequest = objectStore.getAll();
 
     getAllRequest.onsuccess = () => {
-        const expenses = getAllRequest.result;
-        const total = expenses.reduce((acc, expense) => acc + expense.amount, 0);
-        totalDisplay.textContent = total.toFixed(2);
-    };
-}
+        const exercises = getAllRequest.result.reduce((acc, exercise) => {
+            acc[exercise.weekday] = acc[exercise.weekday] || [];
+            acc[exercise.weekday].push(exercise);
+            return acc;
+        }, {});
 
-function renderExpenses() {
-    expensesList.innerHTML = '';
-    const transaction = db.transaction('expenses', 'readonly');
-    const objectStore = transaction.objectStore('expenses');
-    const getAllRequest = objectStore.getAll();
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-    getAllRequest.onsuccess = () => {
-        const expenses = getAllRequest.result;
+        weekdays.forEach((weekday, index) => {
+            const card = document.createElement('div');
+            card.classList.add('border', 'mb-4', 'rounded', 'p-4', 'bg-white', 'shadow-md');
 
-        expenses.forEach((expense) => {
-            // Create a container for the expense item
-            const li = document.createElement('li');
-            li.classList.add(
-                'flex', 'justify-between', 'items-center',
-                'p-4', 'mb-2', 'border', 'border-gray-300',
-                'rounded-lg', 'bg-white', 'shadow-sm'
-            );
+            const cardHeader = document.createElement('div');
+            cardHeader.classList.add('bg-gray-200', 'p-2', 'rounded');
+            cardHeader.innerHTML = `<h2 class="text-lg font-bold">${weekday}</h2>`;
 
-            // Create a div to display the expense details
-            const detailsDiv = document.createElement('div');
-            detailsDiv.classList.add('text-gray-700', 'font-medium', 'flex', 'flex-col');
-            detailsDiv.innerHTML = `
-                <span><strong>Category:</strong> ${expense.category}</span>
-                <span><strong>Amount:</strong> ${expense.amount.toFixed(2)} zł</span>
-                <span><strong>Date:</strong> ${expense.date}</span>
-                <span><strong>Location:</strong> ${expense.location.city || 'Unknown Location'}</span>
-            `;
+            const cardBody = document.createElement('div');
+            cardBody.classList.add('p-4');
 
-            // Create a delete button
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-            deleteButton.classList.add(
-                'bg-red-500', 'text-white', 'py-1', 'px-3',
-                'rounded', 'font-bold', 'hover:bg-red-600',
-                'transition', 'duration-200', 'ease-in-out'
-            );
-            deleteButton.addEventListener('click', () => deleteExpense(expense.id)); // Attach event handler
+            if (exercises[weekday] && exercises[weekday].length > 0) {
+                const exerciseList = document.createElement('ul');
+                exerciseList.classList.add('list-none', 'pl-0');
 
-            // Append the details and button to the list item
-            li.appendChild(detailsDiv);
-            li.appendChild(deleteButton);
+                exercises[weekday].forEach((exercise, idx) => {
+                    const li = document.createElement('li');
+                    li.classList.add('flex', 'justify-between', 'items-center', 'border-b', 'py-2', 'bg-white', 'shadow', 'rounded', 'mb-2');
+                    li.setAttribute('draggable', 'true');
+                    li.setAttribute('data-id', exercise.id);
+                    if (exercise.isDone) {
+                        li.classList.add('bg-green-100');
+                    }
 
-            // Append the list item to the expenses list
-            expensesList.appendChild(li);
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.classList.add('text-gray-800', 'font-semibold', 'flex', 'flex-col');
+                    detailsDiv.innerHTML = `
+                        <span><strong>#${idx + 1}</strong></span>
+                        <span><strong>Exercise:</strong> ${exercise.exercise}</span>
+                        <span><strong>To-do:</strong> ${exercise.sets}x${exercise.reps} (sets x reps)</span>
+                    `;
+
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.classList.add('flex', 'space-x-2', 'ml-auto');
+
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.classList.add('px-2', 'py-1', 'text-white', 'bg-blue-500', 'rounded');
+                    editButton.addEventListener('click', () => editExercise(exercise)); // Attach event handler
+
+                    const infoButton = document.createElement('button');
+                    infoButton.textContent = 'Info';
+                    infoButton.classList.add('px-2', 'py-1', 'text-white', 'bg-gray-500', 'rounded');
+                    infoButton.addEventListener('click', () => showExerciseInfo(exercise)); // Attach event handler
+
+                    buttonGroup.appendChild(editButton);
+                    buttonGroup.appendChild(infoButton);
+
+                    li.appendChild(detailsDiv);
+                    li.appendChild(buttonGroup);
+                    exerciseList.appendChild(li);
+                });
+
+                cardBody.appendChild(exerciseList);
+            } else {
+                cardBody.textContent = 'No exercises for today';
+            }
+
+            card.appendChild(cardHeader);
+            card.appendChild(cardBody);
+            exerciseWeekdays.appendChild(card);
         });
 
-        // Update the total expenses
-        updateTotal();
+        enableDragAndDrop();
     };
 }
 
-function deleteExpense(id) {
-    const transaction = db.transaction('expenses', 'readwrite');
-    const objectStore = transaction.objectStore('expenses');
+function enableDragAndDrop() {
+    const listItems = document.querySelectorAll('[draggable="true"]');
 
-    // Delete the expense by its ID
+    listItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+    e.target.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    const draggableElement = document.querySelector(`[data-id="${id}"]`);
+    const dropzone = e.target.closest('[draggable="true"]');
+
+    if (dropzone && dropzone !== draggableElement) {
+        const list = dropzone.parentNode;
+        list.insertBefore(draggableElement, dropzone.nextSibling);
+        updateExerciseOrder(list);
+    }
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+}
+
+function updateExerciseOrder(list) {
+    const items = list.querySelectorAll('[draggable="true"]');
+    items.forEach((item, idx) => {
+        const detailsDiv = item.querySelector('.flex.flex-col');
+        if (detailsDiv) {
+            detailsDiv.querySelector('span').innerHTML = `<strong>#${idx + 1}</strong>`;
+        }
+    });
+}
+
+function toggleExerciseDone(id, isDone) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
+    const getRequest = objectStore.get(id);
+
+    getRequest.onsuccess = () => {
+        const exercise = getRequest.result;
+        exercise.isDone = isDone;
+
+        const updateRequest = objectStore.put(exercise);
+
+        updateRequest.onsuccess = () => {
+            console.log(`Exercise with id ${id} updated.`);
+            renderExercises(); // Re-render
+        };
+
+        updateRequest.onerror = (event) => {
+            console.error('Update failed', event.target.errorCode);
+        };
+    };
+
+    getRequest.onerror = (event) => {
+        console.error('Get failed', event.target.errorCode);
+    };
+}
+
+function deleteExercise(id) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
     const deleteRequest = objectStore.delete(id);
 
     deleteRequest.onsuccess = () => {
-        console.log(`Expense with id ${id} deleted.`);
-        renderExpenses(); // Re-render
+        console.log(`Exercise with id ${id} deleted.`);
+        renderExercises(); // Re-render
+        hideModal('info-exercise-modal'); // Hide modal after deletion
     };
 
     deleteRequest.onerror = (event) => {
@@ -127,149 +246,128 @@ function deleteExpense(id) {
     };
 }
 
-function addExpense(e) {
+function addExercise(e) {
     e.preventDefault();
 
-    const amount = parseFloat(amountInput.value);
-    const category = categoryInput.value;
-    const date = dateInput.value;
+    const exercise = exerciseInput.value;
+    const sets = parseInt(setsInput.value);
+    const reps = parseInt(repsInput.value);
+    const weekday = weekdayInput.value;
 
-    if (!amount || !category || !date) {
+    if (!exercise || !sets || !reps || !weekday) {
         console.error('Please fill in all fields');
         return;
     }
 
-    const expense = {amount, category, date};
-
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
-
-                const city = await fetchCityName(latitude, longitude);
-                expense.location = {latitude, longitude, city};
-
-                saveExpenseToDB(expense);
-            },
-            (error) => {
-                console.warn('Geolocation not available or denied:', error.message);
-                expense.location = {latitude: null, longitude: null, city: 'Unknown Location'};
-
-                saveExpenseToDB(expense);
-            }
-        );
-    } else {
-        console.warn('Geolocation is not supported by this browser');
-        expense.location = {latitude: null, longitude: null, city: 'Unknown Location'};
-
-        saveExpenseToDB(expense);
-    }
+    const newExercise = { exercise, sets, reps, weekday, isDone: false };
+    saveExerciseToDB(newExercise);
 }
 
-function saveExpenseToDB(expense) {
-    const transaction = db.transaction('expenses', 'readwrite');
-    const objectStore = transaction.objectStore('expenses');
+function saveExerciseToDB(exercise) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
 
-    const addRequest = objectStore.add(expense);
+    const addRequest = objectStore.add(exercise);
 
     addRequest.onsuccess = () => {
-        console.log('Expense added:', expense);
-        renderExpenses(); // Re-render
+        console.log('Exercise added:', exercise);
+        renderExercises(); // Re-render
     };
 
     addRequest.onerror = (event) => {
-        console.error('Failed to save expense:', event.target.errorCode);
+        console.error('Failed to save exercise:', event.target.errorCode);
     };
 
-    // Clear the fields
-    amountInput.value = '';
-    categoryInput.value = '';
-    dateInput.value = '';
+    exerciseInput.value = '';
+    setsInput.value = '';
+    repsInput.value = '';
+    weekdayInput.value = '';
+}
+
+function editExercise(exercise) {
+    editIdInput.value = exercise.id;
+    editExerciseInput.value = exercise.exercise;
+    editSetsInput.value = exercise.sets;
+    editRepsInput.value = exercise.reps;
+    editWeekdayInput.value = exercise.weekday;
+    editModal.classList.remove('hidden');
+}
+
+function saveEditedExercise(e) {
+    e.preventDefault();
+
+    const id = parseInt(editIdInput.value);
+    const exercise = editExerciseInput.value;
+    const sets = parseInt(editSetsInput.value);
+    const reps = parseInt(editRepsInput.value);
+    const weekday = editWeekdayInput.value;
+
+    if (!exercise || !sets || !reps || !weekday) {
+        console.error('Please fill in all fields');
+        return;
+    }
+
+    const updatedExercise = { id, exercise, sets, reps, weekday, isDone: false };
+    updateExerciseInDB(updatedExercise);
+}
+
+function updateExerciseInDB(exercise) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
+    const updateRequest = objectStore.put(exercise);
+
+    updateRequest.onsuccess = () => {
+        console.log('Exercise updated:', exercise);
+        renderExercises(); // Re-render
+        editModal.classList.add('hidden');
+    };
+
+    updateRequest.onerror = (event) => {
+        console.error('Failed to update exercise:', event.target.errorCode);
+    };
+}
+
+function showExerciseInfo(exercise) {
+    if (infoDetails) {
+        infoDetails.innerHTML = `
+            <p><strong>Exercise:</strong> ${exercise.exercise}</p>
+            <p><strong>Sets:</strong> ${exercise.sets}</p>
+            <p><strong>Reps:</strong> ${exercise.reps}</p>
+            <p><strong>Weekday:</strong> ${exercise.weekday}</p>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="info-isDone" ${exercise.isDone ? 'checked' : ''}>
+                <label class="form-check-label" for="info-isDone">Done</label>
+            </div>
+            <button type="button" class="w-full bg-red-500 text-white p-2 rounded mt-3" onclick="deleteExercise(${exercise.id})">Delete</button>
+        `;
+
+        const isDoneCheckbox = document.getElementById('info-isDone');
+        isDoneCheckbox.addEventListener('change', () => toggleExerciseDone(exercise.id, isDoneCheckbox.checked));
+
+        infoModal.classList.remove('hidden');
+    } else {
+        console.error("Info details element not found");
+    }
 }
 
 function updateNetworkStatus() {
     const statusText = document.getElementById('status-text');
     if (navigator.onLine) {
-        statusText.textContent = 'You are online';
-        statusText.classList.remove('text-red-500');
-        statusText.classList.add('text-green-500');
-    } else {
-        statusText.textContent = 'You are offline';
-        statusText.classList.remove('text-green-500');
-        statusText.classList.add('text-red-500');
-    }
-}
-
-function requestNotificationPermission() {
-    if ('Notification' in window && navigator.serviceWorker) {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification('Welcome to Expense Tracker!', {
-                        body: 'Log your expenses daily to stay on top of your finances!',
-                        icon: '/icons/icon-192x192.png',
-                    });
-                });
-            }
-        });
-    }
-}
-
-function fetchCityName(latitude, longitude) {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
-
-    return fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data && data.address) {
-                return data.address.city || data.address.town || data.address.village || 'Unknown Location';
-            } else {
-                console.warn('Reverse geocoding response does not contain city information');
-                return 'Unknown Location';
-            }
-        })
-        .catch(error => {
-            console.error('Failed to fetch city name:', error);
-            return 'Unknown Location';
-        });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateNetworkStatus();
-    expenseForm.addEventListener('submit', addExpense);
-    requestNotificationPermission(); // Request permission on app load
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-});
-document.getElementById('view-summary').addEventListener('click', () => {
-    const transaction = db.transaction('expenses', 'readonly');
-    const objectStore = transaction.objectStore('expenses');
-    const getAllRequest = objectStore.getAll();
-
-    getAllRequest.onsuccess = () => {
-        const expenses = getAllRequest.result;
-        const summaryList = document.getElementById('summary-list');
-        summaryList.innerHTML = '';
-
-        const categoryTotals = expenses.reduce((totals, expense) => {
-            if (!totals[expense.category]) {
-                totals[expense.category] = 0;
-            }
-            totals[expense.category] += expense.amount;
-            return totals;
-        }, {});
-
-        for (const [category, total] of Object.entries(categoryTotals)) {
-            const li = document.createElement('li');
-            li.innerHTML = `${category} <strong>${total.toFixed(2)}</strong> PLN`;
-            summaryList.appendChild(li);
+        if (statusText) {
+            statusText.textContent = 'You are online';
+            statusText.classList.remove('text-red-500');
+            statusText.classList.add('text-green-500');
+        } else {
+            console.error("Status text element not found");
         }
-
-        document.getElementById('summary-view').classList.remove('hidden');
-    };
-});
-
-document.getElementById('close-summary').addEventListener('click', () => {
-    document.getElementById('summary-view').classList.add('hidden');
-});
+    } else {
+        if (statusText) {
+            statusText.textContent = 'You are offline';
+            statusText.classList.remove('text-green-500');
+            statusText.classList.add('text-red-500');
+        } else {
+            console.error("Status text element not found");
+        }
+    }
+}

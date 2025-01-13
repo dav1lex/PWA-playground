@@ -2,77 +2,150 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Exercise Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
     <script defer src="main.js"></script>
+    <style>
+        #ios-install-banner {
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        #info-banner {
+            background-color: #23557d;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        body {
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row .col {
+                margin-bottom: 1rem;
+            }
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(81, 203, 238, 1);
+            border: 1px solid rgba(81, 203, 238, 1);
+        }
+    </style>
 </head>
-<body class="flex flex-col min-h-screen bg-gray-100 text-gray-800">
+<body class="flex flex-col min-h-screen bg-gray-100 text-gray-900">
 <header class="bg-blue-600 text-white py-4 text-center">
-    <h1 class="text-3xl font-bold">Expense Tracker</h1>
+    <h1 class="text-4xl font-bold">Exercise Tracker</h1>
 </header>
 
-<main class="flex-grow max-w-3xl mx-auto p-4 space-y-6">
-    <!--    check ios-->
-    <div id="ios-install-banner" style="display: none; background: #ffcc00; padding: 10px;">
-        <p>
-            For iOS:to install this app, tap the <strong>Share</strong> icon at the bottom of the screen
-            and select <strong>Add to Home Screen</strong>. <strong>Geolocation</strong> can not be used on iOS devices.
-        </p>
+<main class="flex-grow container mx-auto ">
+    <div id="ios-install-banner" class="alert alert-warning hidden" role="alert">
+        For iOS: to install this app, tap the <strong>Share</strong> icon at the bottom of the screen
+        and select <strong>Add to Home Screen</strong>.
     </div>
-    <!--    check ios-->
-    <section class="bg-white p-6 rounded shadow mb-4">
-        <h2 class="text-2xl mb-4">Add Expense</h2>
-        <form id="expense-form" class="flex flex-col">
-            <div class="flex flex-col sm:flex-row mb-4 space-y-4 sm:space-y-0 sm:space-x-2">
-                <input type="number" id="amount" placeholder="Amount" required
-                       class="flex-1 border border-gray-300 p-2 rounded">
-                <input type="text" id="category" placeholder="Category" required
-                       class="flex-1 border border-gray-300 p-2 rounded">
-                <input type="date" id="date" required class="flex-1 border border-gray-300 p-2 rounded">
+    <div id="info-banner" class="alert alert-info" role="alert">
+        You can add, edit, remove the exercises. Also drag and drop to change order of exercises.
+    </div>
+    <div id="network-status" class="text-center py-2">
+        <p id="status-text" class="text-green-500">You are online</p>
+    </div>
+    <section class="bg-white shadow-md rounded-lg p-4 mb-4">
+        <h2 class="text-xl font-bold mb-3">Add Exercise</h2>
+        <form id="exercise-form" class="space-y-3">
+            <div class="flex flex-wrap gap-3">
+                <input type="text" id="exercise" class="flex-1 p-2 border border-gray-300 rounded"
+                       placeholder="Exercise" required>
+                <input type="number" id="sets" class="flex-1 p-2 border border-gray-300 rounded" placeholder="Sets"
+                       required>
+                <input type="number" id="reps" class="flex-1 p-2 border border-gray-300 rounded" placeholder="Reps"
+                       required>
+                <select id="weekday" class="flex-1 p-2 border border-gray-300 rounded" required>
+                    <option value="Monday" selected>Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
             </div>
-            <button type="submit" class="bg-green-500 text-white py-2 rounded hover:bg-green-600">Add Expense</button>
+            <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Add Exercise</button>
         </form>
     </section>
 
-    <section class="bg-white p-6 rounded shadow mb-4">
-        <h2 class="text-2xl mb-4">Expense List</h2>
-        <ul id="expenses" class="list-none"></ul>
+    <section class="bg-white shadow-md rounded-lg p-4 mb-4">
+        <h2 class="text-xl font-bold mb-3">Exercise List</h2>
+        <div id="exercise-weekdays"></div>
     </section>
 
-    <section class="bg-white p-6 rounded shadow">
-        <h2 class="text-2xl mb-4">Total Expenses (in PLN)</h2>
-        <p id="total" class="text-xl font-bold">PLN 0</p>
-    </section>
-</main>
-<div id="network-status" class="text-center py-2">
-    <p id="status-text" class="text-green-500">You are online</p>
-</div>
-<section class="bg-white p-6 rounded shadow-lg space-y-4">
-    <h2 class="text-2xl font-semibold text-gray-800">Summary</h2>
-    <p class="text-gray-600">Get a quick overview of your expenses with a single click.</p>
-    <button id="view-summary"
-            class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 ease-in-out">
-        View Summary
-    </button>
-</section>
-
-<div id="summary-view" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Expense Summary</h2>
-        <ul id="summary-list" class="list-disc pl-5 space-y-2 text-gray-700"></ul>
-        <button id="close-summary"
-                class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200 ease-in-out mt-6">
-            Close Summary
-        </button>
+    <!-- Edit Exercise Modal -->
+    <div id="edit-exercise-modal"
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
+            <div class="bg-gray-50 p-4">
+                <h5 class="text-lg font-bold">Edit Exercise</h5>
+            </div>
+            <div class="p-4">
+                <form id="edit-exercise-form">
+                    <input type="hidden" id="edit-id">
+                    <div class="space-y-3">
+                        <input type="text" id="edit-exercise" class="w-full p-2 border border-gray-300 rounded"
+                               placeholder="Exercise" required>
+                        <input type="number" id="edit-sets" class="w-full p-2 border border-gray-300 rounded"
+                               placeholder="Sets" required>
+                        <input type="number" id="edit-reps" class="w-full p-2 border border-gray-300 rounded"
+                               placeholder="Reps" required>
+                        <select id="edit-weekday" class="w-full p-2 border border-gray-300 rounded" required>
+                            <option value="" disabled selected>Select Day</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded mt-3">Save Changes</button>
+                    <button type="button" class="w-full bg-red-500 text-white p-2 rounded mt-2"
+                            onclick="hideModal('edit-exercise-modal')">Cancel
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-</div>
-<footer class="bg-blue-600 text-white text-center p-4">
-    <p>&copy; 2024 Expense Tracker</p>
+
+    <!-- Info Exercise Modal -->
+    <div id="info-exercise-modal"
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
+            <div class="bg-gray-50 p-4">
+                <h5 class="text-lg font-bold">Exercise Info</h5>
+            </div>
+            <div class="p-4">
+                <div id="info-exercise-details" class="text-gray-800"></div>
+                <button type="button" class="w-full bg-red-500 text-white p-2 rounded mt-3"
+                        onclick="hideModal('info-exercise-modal')">Close
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-blue-600 text-white text-center py-3">
+    <p>&copy; 2024 Exercise Tracker</p>
 </footer>
+
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -87,6 +160,16 @@
     } else {
         console.warn('Service Worker is not supported in this browser.');
     }
+
+    function hideModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    document.addEventListener('focusin', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+            e.target.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+    });
 </script>
 </body>
 </html>
