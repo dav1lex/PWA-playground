@@ -1,375 +1,262 @@
-const dbRequest = indexedDB.open('ExerciseTrackerDB', 1);
-let db;
+const elements = {
+    exerciseForm: document.getElementById('exercise-form'),
+    editForm: document.getElementById('edit-exercise-form'),
 
-const exerciseForm = document.getElementById('exercise-form');
-const exerciseInput = document.getElementById('exercise');
-const setsInput = document.getElementById('sets');
-const repsInput = document.getElementById('reps');
-const weekdayInput = document.getElementById('weekday');
-const exerciseWeekdays = document.getElementById('exercise-weekdays');
+    // input fields
+    exerciseInput: document.getElementById('exercise'),
+    setsInput: document.getElementById('sets'),
+    repsInput: document.getElementById('reps'),
+    weekdayInput: document.getElementById('weekday'),
 
-const editExerciseForm = document.getElementById('edit-exercise-form');
-const editIdInput = document.getElementById('edit-id');
-const editExerciseInput = document.getElementById('edit-exercise');
-const editSetsInput = document.getElementById('edit-sets');
-const editRepsInput = document.getElementById('edit-reps');
-const editWeekdayInput = document.getElementById('edit-weekday');
-const editModal = document.getElementById('edit-exercise-modal');
-const infoModal = document.getElementById('info-exercise-modal');
-const infoDetails = document.getElementById('info-exercise-details');
+    // Edit fields
+    editId: document.getElementById('edit-id'),
+    editExercise: document.getElementById('edit-exercise'),
+    editSets: document.getElementById('edit-sets'),
+    editReps: document.getElementById('edit-reps'),
+    editWeekday: document.getElementById('edit-weekday'),
 
-const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-if (isIos && isSafari) {
-    const banner = document.getElementById('ios-install-banner');
-    if (banner) {
-        banner.classList.remove('hidden');
-    } else {
-        console.error("iOS install banner element not found");
-    }
-}
-
-dbRequest.onupgradeneeded = (event) => {
-    db = event.target.result;
-    const objectStore = db.createObjectStore('exercises', { keyPath: 'id', autoIncrement: true });
-    objectStore.createIndex('exercise', 'exercise', { unique: false });
-    objectStore.createIndex('sets', 'sets', { unique: false });
-    objectStore.createIndex('reps', 'reps', { unique: false });
-    objectStore.createIndex('weekday', 'weekday', { unique: false });
-    objectStore.createIndex('isDone', 'isDone', { unique: false });
+    // Display area
+    exerciseList: document.getElementById('exercise-weekdays'),
+    editModal: document.getElementById('edit-exercise-modal'),
+    infoModal: document.getElementById('info-exercise-modal'),
+    infoDetails: document.getElementById('info-exercise-details'),
+    statusText: document.getElementById('status-text')
 };
 
-dbRequest.onsuccess = (event) => {
-    db = event.target.result;
-    console.log('Database opened successfully');
-    renderExercises(); // Render exercises on DB connection
-};
+// database connection
+let db = null;
 
-dbRequest.onerror = (event) => {
-    console.error('Database error:', event.target.errorCode);
-};
+//Set up database when the page loads
+function setupDatabase() {
+    const request = indexedDB.open('ExerciseTrackerDB', 1);
 
-document.addEventListener('DOMContentLoaded', () => {
-    updateNetworkStatus();
-    if (exerciseForm) {
-        exerciseForm.addEventListener('submit', addExercise);
-    } else {
-        console.error("Exercise form element not found");
-    }
-    if (editExerciseForm) {
-        editExerciseForm.addEventListener('submit', saveEditedExercise);
-    } else {
-        console.error("Edit exercise form element not found");
-    }
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-    enableDragAndDrop();
-});
-
-function renderExercises() {
-    if (!exerciseWeekdays) {
-        console.error("Exercise weekdays element not found");
-        return;
-    }
-    exerciseWeekdays.innerHTML = '';
-
-    const transaction = db.transaction('exercises', 'readonly');
-    const objectStore = transaction.objectStore('exercises');
-    const getAllRequest = objectStore.getAll();
-
-    getAllRequest.onsuccess = () => {
-        const exercises = getAllRequest.result.reduce((acc, exercise) => {
-            acc[exercise.weekday] = acc[exercise.weekday] || [];
-            acc[exercise.weekday].push(exercise);
-            return acc;
-        }, {});
-
-        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-        weekdays.forEach((weekday, index) => {
-            const card = document.createElement('div');
-            card.classList.add('border', 'mb-4', 'rounded', 'p-4', 'bg-white', 'shadow-md');
-
-            const cardHeader = document.createElement('div');
-            cardHeader.classList.add('bg-gray-200', 'p-2', 'rounded');
-            cardHeader.innerHTML = `<h2 class="text-lg font-bold">${weekday}</h2>`;
-
-            const cardBody = document.createElement('div');
-            cardBody.classList.add('p-4');
-
-            if (exercises[weekday] && exercises[weekday].length > 0) {
-                const exerciseList = document.createElement('ul');
-                exerciseList.classList.add('list-none', 'pl-0');
-
-                exercises[weekday].forEach((exercise, idx) => {
-                    const li = document.createElement('li');
-                    li.classList.add('flex', 'justify-between', 'items-center', 'border-b', 'py-2', 'bg-white', 'shadow', 'rounded', 'mb-2');
-                    li.setAttribute('draggable', 'true');
-                    li.setAttribute('data-id', exercise.id);
-                    if (exercise.isDone) {
-                        li.classList.add('bg-green-100');
-                    }
-
-                    const detailsDiv = document.createElement('div');
-                    detailsDiv.classList.add('text-gray-800', 'font-semibold', 'flex', 'flex-col');
-                    detailsDiv.innerHTML = `
-                        <span><strong>#${idx + 1}</strong></span>
-                        <span><strong>Exercise:</strong> ${exercise.exercise}</span>
-                        <span><strong>To-do:</strong> ${exercise.sets}x${exercise.reps} (sets x reps)</span>
-                    `;
-
-                    const buttonGroup = document.createElement('div');
-                    buttonGroup.classList.add('flex', 'space-x-2', 'ml-auto');
-
-                    const editButton = document.createElement('button');
-                    editButton.textContent = 'Edit';
-                    editButton.classList.add('px-2', 'py-1', 'text-white', 'bg-blue-500', 'rounded');
-                    editButton.addEventListener('click', () => editExercise(exercise)); // Attach event handler
-
-                    const infoButton = document.createElement('button');
-                    infoButton.textContent = 'Info';
-                    infoButton.classList.add('px-2', 'py-1', 'text-white', 'bg-gray-500', 'rounded');
-                    infoButton.addEventListener('click', () => showExerciseInfo(exercise)); // Attach event handler
-
-                    buttonGroup.appendChild(editButton);
-                    buttonGroup.appendChild(infoButton);
-
-                    li.appendChild(detailsDiv);
-                    li.appendChild(buttonGroup);
-                    exerciseList.appendChild(li);
-                });
-
-                cardBody.appendChild(exerciseList);
-            } else {
-                cardBody.textContent = 'No exercises for today';
-            }
-
-            card.appendChild(cardHeader);
-            card.appendChild(cardBody);
-            exerciseWeekdays.appendChild(card);
+    // runs if we need to create or update the database
+    request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        // Create db
+        const store = db.createObjectStore('exercises', {
+            keyPath: 'id',
+            autoIncrement: true
         });
 
-        enableDragAndDrop();
+        // Add search indexes
+        store.createIndex('exercise', 'exercise');
+        store.createIndex('weekday', 'weekday');
+        store.createIndex('isDone', 'isDone');
+    };
+
+    // runs after db is ready
+    request.onsuccess = function(event) {
+        db = event.target.result;
+        showAllExercises(); // Show exercises
+    };
+
+    request.onerror = function(event) {
+        console.log('Database error:', event.target.error);
     };
 }
 
-
-function addExercise(e) {
-    e.preventDefault();
-
-    const exercise = exerciseInput.value;
-    const sets = parseInt(setsInput.value);
-    const reps = parseInt(repsInput.value);
-    const weekday = weekdayInput.value;
-
-    if (!exercise || !sets || !reps || !weekday) {
-        console.error('Please fill in all fields');
-        return;
-    }
-
-    const newExercise = {exercise, sets, reps, weekday, isDone: false};
-    saveExerciseToDB(newExercise);
-}
-
-function deleteExercise(id) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const deleteRequest = objectStore.delete(id);
-
-    deleteRequest.onsuccess = () => {
-        console.log(`Exercise with id ${id} deleted.`);
-        renderExercises(); // Re-render
-        hideModal('info-exercise-modal'); // Hide modal after deletion
+function addExercise(event) {
+    event.preventDefault();
+    // Get all the values from the form
+    const newExercise = {
+        exercise: elements.exerciseInput.value,
+        sets: Number(elements.setsInput.value),
+        reps: Number(elements.repsInput.value),
+        weekday: elements.weekdayInput.value,
+        isDone: false
     };
 
-    deleteRequest.onerror = (event) => {
-        console.error('Delete failed', event.target.errorCode);
+    //Save
+    const transaction = db.transaction(['exercises'], 'readwrite');
+    const store = transaction.objectStore('exercises');
+    const request = store.add(newExercise);
+
+    request.onsuccess = function() {
+        // Clear the form and refresh the display
+        elements.exerciseForm.reset();
+        showAllExercises();
     };
 }
 
-function editExercise(exercise) {
-    editIdInput.value = exercise.id;
-    editExerciseInput.value = exercise.exercise;
-    editSetsInput.value = exercise.sets;
-    editRepsInput.value = exercise.reps;
-    editWeekdayInput.value = exercise.weekday;
-    editModal.classList.remove('hidden');
+function showAllExercises() {
+    const transaction = db.transaction(['exercises'], 'readonly');
+    const store = transaction.objectStore('exercises');
+    const request = store.getAll();
+
+    request.onsuccess = function() {
+        const exercises = request.result;
+        displayExercises(exercises);
+    };
 }
 
-function showExerciseInfo(exercise) {
-    if (infoDetails) {
-        infoDetails.innerHTML = `
+function displayExercises(exercises) {
+    // Group exercises by day
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    let html = '';
+
+    // Create a section for each day
+    days.forEach(day => {
+        // Find exercises for this day
+        const dayExercises = exercises.filter(ex => ex.weekday === day);
+
+        if (dayExercises.length > 0) {
+            html += `
+                <div class="border mb-4 rounded p-4 bg-white shadow-md">
+                    <div class="bg-gray-200 p-2 rounded">
+                        <h2 class="text-lg font-bold">${day}</h2>
+                    </div>
+                    <div class="p-4">
+                        ${dayExercises.map((exercise, index) => `
+                            <div class="border-b py-2 ${exercise.isDone ? 'bg-green-100' : ''}">
+                                <p><strong>#${index + 1}</strong></p>
+                                <p><strong>Exercise:</strong> ${exercise.exercise}</p>
+                                <p><strong>Sets × Reps:</strong> ${exercise.sets} × ${exercise.reps}</p>
+                                <button onclick="showEditForm(${exercise.id})" 
+                                        class="bg-blue-500 text-white px-2 py-1 rounded">
+                                    Edit
+                                </button>
+                                <button onclick="showExerciseInfo(${exercise.id})" 
+                                        class="bg-gray-500 text-white px-2 py-1 rounded">
+                                    Info
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    elements.exerciseList.innerHTML = html;
+}
+
+//edit form
+function showEditForm(id) {
+    const transaction = db.transaction(['exercises'], 'readonly');
+    const store = transaction.objectStore('exercises');
+    const request = store.get(id);
+
+    request.onsuccess = function() {
+        const exercise = request.result;
+        elements.editId.value = exercise.id;
+        elements.editExercise.value = exercise.exercise;
+        elements.editSets.value = exercise.sets;
+        elements.editReps.value = exercise.reps;
+        elements.editWeekday.value = exercise.weekday;
+
+        elements.editModal.classList.remove('hidden');
+        elements.editModal.classList.add('show');
+    };
+}
+
+//Save edited exercise
+function saveEditedExercise(event) {
+    event.preventDefault();
+
+    const updatedExercise = {
+        id: Number(elements.editId.value),
+        exercise: elements.editExercise.value,
+        sets: Number(elements.editSets.value),
+        reps: Number(elements.editReps.value),
+        weekday: elements.editWeekday.value,
+        isDone: false
+    };
+
+    const transaction = db.transaction(['exercises'], 'readwrite');
+    const store = transaction.objectStore('exercises');
+    const request = store.put(updatedExercise);
+
+    request.onsuccess = function() {
+        hideModal('edit-exercise-modal');
+        showAllExercises();
+    };
+}
+
+function showExerciseInfo(id) {
+    const transaction = db.transaction(['exercises'], 'readonly');
+    const store = transaction.objectStore('exercises');
+    const request = store.get(id);
+
+    request.onsuccess = function() {
+        const exercise = request.result;
+        elements.infoDetails.innerHTML = `
             <p><strong>Exercise:</strong> ${exercise.exercise}</p>
             <p><strong>Sets:</strong> ${exercise.sets}</p>
             <p><strong>Reps:</strong> ${exercise.reps}</p>
             <p><strong>Weekday:</strong> ${exercise.weekday}</p>
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="info-isDone" ${exercise.isDone ? 'checked' : ''}>
-                <label class="form-check-label" for="info-isDone">Done</label>
+            <div class="mt-3">
+                <label>
+                    <input type="checkbox" 
+                           onchange="toggleExerciseDone(${exercise.id}, this.checked)"
+                           ${exercise.isDone ? 'checked' : ''}>
+                    Done
+                </label>
             </div>
-            <button type="button" class="w-full bg-red-500 text-white p-2 rounded mt-3" onclick="deleteExercise(${exercise.id})">Delete</button>
+            <button onclick="deleteExercise(${exercise.id})"
+                    class="w-full bg-red-500 text-white p-2 rounded mt-3">
+                Delete
+            </button>
         `;
 
-        const isDoneCheckbox = document.getElementById('info-isDone');
-        isDoneCheckbox.addEventListener('change', () => toggleExerciseDone(exercise.id, isDoneCheckbox.checked));
-
-        infoModal.classList.remove('hidden');
-    } else {
-        console.error("Info details element not found");
-    }
+        elements.infoModal.classList.remove('hidden');
+        elements.infoModal.classList.add('show');
+    };
 }
 
+function deleteExercise(id) {
+    const transaction = db.transaction(['exercises'], 'readwrite');
+    const store = transaction.objectStore('exercises');
+    const request = store.delete(id);
+
+    request.onsuccess = function() {
+        hideModal('info-exercise-modal');
+        showAllExercises();
+    };
+}
+
+//oggle completion
 function toggleExerciseDone(id, isDone) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
+    const transaction = db.transaction(['exercises'], 'readwrite');
+    const store = transaction.objectStore('exercises');
+    const request = store.get(id);
 
-    const getRequest = objectStore.get(id);
-
-    getRequest.onsuccess = () => {
-        const exercise = getRequest.result;
+    request.onsuccess = function() {
+        const exercise = request.result;
         exercise.isDone = isDone;
-
-        const updateRequest = objectStore.put(exercise);
-
-        updateRequest.onsuccess = () => {
-            console.log(`Exercise with id ${id} updated.`);
-            renderExercises(); // Re-render
-        };
-
-        updateRequest.onerror = (event) => {
-            console.error('Update failed', event.target.errorCode);
-        };
-    };
-
-    getRequest.onerror = (event) => {
-        console.error('Get failed', event.target.errorCode);
+        store.put(exercise);
+        showAllExercises();
     };
 }
 
-function saveExerciseToDB(exercise) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const addRequest = objectStore.add(exercise);
-
-    addRequest.onsuccess = () => {
-        console.log('Exercise added:', exercise);
-        renderExercises(); // Re-render
-    };
-
-    addRequest.onerror = (event) => {
-        console.error('Failed to save exercise:', event.target.errorCode);
-    };
-
-    exerciseInput.value = '';
-    setsInput.value = '';
-    repsInput.value = '';
-    weekdayInput.value = '';
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    modal.classList.remove('show');
 }
-
-function saveEditedExercise(e) {
-    e.preventDefault();
-
-    const id = parseInt(editIdInput.value);
-    const exercise = editExerciseInput.value;
-    const sets = parseInt(editSetsInput.value);
-    const reps = parseInt(editRepsInput.value);
-    const weekday = editWeekdayInput.value;
-
-    if (!exercise || !sets || !reps || !weekday) {
-        console.error('Please fill in all fields');
-        return;
-    }
-
-    const updatedExercise = {id, exercise, sets, reps, weekday, isDone: false};
-    updateExerciseInDB(updatedExercise);
-}
-
-function updateExerciseInDB(exercise) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const updateRequest = objectStore.put(exercise);
-
-    updateRequest.onsuccess = () => {
-        console.log('Exercise updated:', exercise);
-        renderExercises(); // Re-render
-        editModal.classList.add('hidden');
-    };
-
-    updateRequest.onerror = (event) => {
-        console.error('Failed to update exercise:', event.target.errorCode);
-    };
-}
-
-
-function updateNetworkStatus() {
-    const statusText = document.getElementById('status-text');
+//online/offline status
+function updateOnlineStatus() {
     if (navigator.onLine) {
-        if (statusText) {
-            statusText.textContent = 'You are online';
-            statusText.classList.remove('text-red-500');
-            statusText.classList.add('text-green-500');
-        } else {
-            console.error("Status text element not found");
-        }
+        elements.statusText.textContent = 'You are online';
+        elements.statusText.classList.remove('text-red-500');
+        elements.statusText.classList.add('text-green-500');
     } else {
-        if (statusText) {
-            statusText.textContent = 'You are offline';
-            statusText.classList.remove('text-green-500');
-            statusText.classList.add('text-red-500');
-        } else {
-            console.error("Status text element not found");
-        }
+        elements.statusText.textContent = 'You are offline';
+        elements.statusText.classList.remove('text-green-500');
+        elements.statusText.classList.add('text-red-500');
     }
 }
 
-function enableDragAndDrop() {
-    const listItems = document.querySelectorAll('[draggable="true"]');
+//event listeners when the page loads
+window.addEventListener('load', function() {
+    setupDatabase();
 
-    listItems.forEach(item => {
-        item.addEventListener('dragstart', handleDragStart);
-        item.addEventListener('dragover', handleDragOver);
-        item.addEventListener('drop', handleDrop);
-        item.addEventListener('dragend', handleDragEnd);
-    });
-}
+    // Form submissions
+    elements.exerciseForm.addEventListener('submit', addExercise);
+    elements.editForm.addEventListener('submit', saveEditedExercise);
 
-function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.dataset.id);
-    e.target.classList.add('dragging');
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    const id = e.dataTransfer.getData('text/plain');
-    const draggableElement = document.querySelector(`[data-id="${id}"]`);
-    const dropzone = e.target.closest('[draggable="true"]');
-
-    if (dropzone && dropzone !== draggableElement) {
-        const list = dropzone.parentNode;
-        list.insertBefore(draggableElement, dropzone.nextSibling);
-        updateExerciseOrder(list);
-    }
-}
-
-function handleDragEnd(e) {
-    e.target.classList.remove('dragging');
-}
-
-function updateExerciseOrder(list) {
-    const items = list.querySelectorAll('[draggable="true"]');
-    items.forEach((item, idx) => {
-        const detailsDiv = item.querySelector('.flex.flex-col');
-        if (detailsDiv) {
-            detailsDiv.querySelector('span').innerHTML = `<strong>#${idx + 1}</strong>`;
-        }
-    });
-}
+    // Online/offline detection
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+});
