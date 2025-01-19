@@ -26,6 +26,20 @@ const elements = {
 // database connection
 let db = null;
 
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+if (isIos && isSafari) {
+    const banner = document.getElementById('ios-install-banner');
+    banner.style.display = 'block';
+    if (banner) {
+        banner.classList.remove('hidden');
+    } else {
+        console.error("iOS install banner element not found");
+    }
+}
+
+
 //Set up database when the page loads
 function setupDatabase() {
     const request = indexedDB.open('ExerciseTrackerDB', 1);
