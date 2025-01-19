@@ -31,7 +31,7 @@ function setupDatabase() {
     const request = indexedDB.open('ExerciseTrackerDB', 1);
 
     // runs if we need to create or update the database
-    request.onupgradeneeded = function(event) {
+    request.onupgradeneeded = function (event) {
         const db = event.target.result;
         // Create db
         const store = db.createObjectStore('exercises', {
@@ -46,12 +46,12 @@ function setupDatabase() {
     };
 
     // runs after db is ready
-    request.onsuccess = function(event) {
+    request.onsuccess = function (event) {
         db = event.target.result;
         showAllExercises(); // Show exercises
     };
 
-    request.onerror = function(event) {
+    request.onerror = function (event) {
         console.log('Database error:', event.target.error);
     };
 }
@@ -72,7 +72,7 @@ function addExercise(event) {
     const store = transaction.objectStore('exercises');
     const request = store.add(newExercise);
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         // Clear the form and refresh the display
         elements.exerciseForm.reset();
         showAllExercises();
@@ -84,7 +84,7 @@ function showAllExercises() {
     const store = transaction.objectStore('exercises');
     const request = store.getAll();
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         const exercises = request.result;
         displayExercises(exercises);
     };
@@ -137,7 +137,7 @@ function showEditForm(id) {
     const store = transaction.objectStore('exercises');
     const request = store.get(id);
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         const exercise = request.result;
         elements.editId.value = exercise.id;
         elements.editExercise.value = exercise.exercise;
@@ -167,7 +167,7 @@ function saveEditedExercise(event) {
     const store = transaction.objectStore('exercises');
     const request = store.put(updatedExercise);
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         hideModal('edit-exercise-modal');
         showAllExercises();
     };
@@ -178,7 +178,7 @@ function showExerciseInfo(id) {
     const store = transaction.objectStore('exercises');
     const request = store.get(id);
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         const exercise = request.result;
         elements.infoDetails.innerHTML = `
             <p><strong>Exercise:</strong> ${exercise.exercise}</p>
@@ -209,7 +209,7 @@ function deleteExercise(id) {
     const store = transaction.objectStore('exercises');
     const request = store.delete(id);
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         hideModal('info-exercise-modal');
         showAllExercises();
     };
@@ -221,7 +221,7 @@ function toggleExerciseDone(id, isDone) {
     const store = transaction.objectStore('exercises');
     const request = store.get(id);
 
-    request.onsuccess = function() {
+    request.onsuccess = function () {
         const exercise = request.result;
         exercise.isDone = isDone;
         store.put(exercise);
@@ -234,6 +234,7 @@ function hideModal(modalId) {
     modal.classList.add('hidden');
     modal.classList.remove('show');
 }
+
 //online/offline status
 function updateOnlineStatus() {
     if (navigator.onLine) {
@@ -248,7 +249,7 @@ function updateOnlineStatus() {
 }
 
 //event listeners when the page loads
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     setupDatabase();
 
     // Form submissions
