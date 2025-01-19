@@ -154,6 +154,178 @@ function renderExercises() {
     };
 }
 
+
+function addExercise(e) {
+    e.preventDefault();
+
+    const exercise = exerciseInput.value;
+    const sets = parseInt(setsInput.value);
+    const reps = parseInt(repsInput.value);
+    const weekday = weekdayInput.value;
+
+    if (!exercise || !sets || !reps || !weekday) {
+        console.error('Please fill in all fields');
+        return;
+    }
+
+    const newExercise = {exercise, sets, reps, weekday, isDone: false};
+    saveExerciseToDB(newExercise);
+}
+
+function deleteExercise(id) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
+    const deleteRequest = objectStore.delete(id);
+
+    deleteRequest.onsuccess = () => {
+        console.log(`Exercise with id ${id} deleted.`);
+        renderExercises(); // Re-render
+        hideModal('info-exercise-modal'); // Hide modal after deletion
+    };
+
+    deleteRequest.onerror = (event) => {
+        console.error('Delete failed', event.target.errorCode);
+    };
+}
+
+function editExercise(exercise) {
+    editIdInput.value = exercise.id;
+    editExerciseInput.value = exercise.exercise;
+    editSetsInput.value = exercise.sets;
+    editRepsInput.value = exercise.reps;
+    editWeekdayInput.value = exercise.weekday;
+    editModal.classList.remove('hidden');
+}
+
+function showExerciseInfo(exercise) {
+    if (infoDetails) {
+        infoDetails.innerHTML = `
+            <p><strong>Exercise:</strong> ${exercise.exercise}</p>
+            <p><strong>Sets:</strong> ${exercise.sets}</p>
+            <p><strong>Reps:</strong> ${exercise.reps}</p>
+            <p><strong>Weekday:</strong> ${exercise.weekday}</p>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="info-isDone" ${exercise.isDone ? 'checked' : ''}>
+                <label class="form-check-label" for="info-isDone">Done</label>
+            </div>
+            <button type="button" class="w-full bg-red-500 text-white p-2 rounded mt-3" onclick="deleteExercise(${exercise.id})">Delete</button>
+        `;
+
+        const isDoneCheckbox = document.getElementById('info-isDone');
+        isDoneCheckbox.addEventListener('change', () => toggleExerciseDone(exercise.id, isDoneCheckbox.checked));
+
+        infoModal.classList.remove('hidden');
+    } else {
+        console.error("Info details element not found");
+    }
+}
+
+function toggleExerciseDone(id, isDone) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
+    const getRequest = objectStore.get(id);
+
+    getRequest.onsuccess = () => {
+        const exercise = getRequest.result;
+        exercise.isDone = isDone;
+
+        const updateRequest = objectStore.put(exercise);
+
+        updateRequest.onsuccess = () => {
+            console.log(`Exercise with id ${id} updated.`);
+            renderExercises(); // Re-render
+        };
+
+        updateRequest.onerror = (event) => {
+            console.error('Update failed', event.target.errorCode);
+        };
+    };
+
+    getRequest.onerror = (event) => {
+        console.error('Get failed', event.target.errorCode);
+    };
+}
+
+function saveExerciseToDB(exercise) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
+    const addRequest = objectStore.add(exercise);
+
+    addRequest.onsuccess = () => {
+        console.log('Exercise added:', exercise);
+        renderExercises(); // Re-render
+    };
+
+    addRequest.onerror = (event) => {
+        console.error('Failed to save exercise:', event.target.errorCode);
+    };
+
+    exerciseInput.value = '';
+    setsInput.value = '';
+    repsInput.value = '';
+    weekdayInput.value = '';
+}
+
+function saveEditedExercise(e) {
+    e.preventDefault();
+
+    const id = parseInt(editIdInput.value);
+    const exercise = editExerciseInput.value;
+    const sets = parseInt(editSetsInput.value);
+    const reps = parseInt(editRepsInput.value);
+    const weekday = editWeekdayInput.value;
+
+    if (!exercise || !sets || !reps || !weekday) {
+        console.error('Please fill in all fields');
+        return;
+    }
+
+    const updatedExercise = {id, exercise, sets, reps, weekday, isDone: false};
+    updateExerciseInDB(updatedExercise);
+}
+
+function updateExerciseInDB(exercise) {
+    const transaction = db.transaction('exercises', 'readwrite');
+    const objectStore = transaction.objectStore('exercises');
+
+    const updateRequest = objectStore.put(exercise);
+
+    updateRequest.onsuccess = () => {
+        console.log('Exercise updated:', exercise);
+        renderExercises(); // Re-render
+        editModal.classList.add('hidden');
+    };
+
+    updateRequest.onerror = (event) => {
+        console.error('Failed to update exercise:', event.target.errorCode);
+    };
+}
+
+
+function updateNetworkStatus() {
+    const statusText = document.getElementById('status-text');
+    if (navigator.onLine) {
+        if (statusText) {
+            statusText.textContent = 'You are online';
+            statusText.classList.remove('text-red-500');
+            statusText.classList.add('text-green-500');
+        } else {
+            console.error("Status text element not found");
+        }
+    } else {
+        if (statusText) {
+            statusText.textContent = 'You are offline';
+            statusText.classList.remove('text-green-500');
+            statusText.classList.add('text-red-500');
+        } else {
+            console.error("Status text element not found");
+        }
+    }
+}
+
 function enableDragAndDrop() {
     const listItems = document.querySelectorAll('[draggable="true"]');
 
@@ -200,174 +372,4 @@ function updateExerciseOrder(list) {
             detailsDiv.querySelector('span').innerHTML = `<strong>#${idx + 1}</strong>`;
         }
     });
-}
-
-function toggleExerciseDone(id, isDone) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const getRequest = objectStore.get(id);
-
-    getRequest.onsuccess = () => {
-        const exercise = getRequest.result;
-        exercise.isDone = isDone;
-
-        const updateRequest = objectStore.put(exercise);
-
-        updateRequest.onsuccess = () => {
-            console.log(`Exercise with id ${id} updated.`);
-            renderExercises(); // Re-render
-        };
-
-        updateRequest.onerror = (event) => {
-            console.error('Update failed', event.target.errorCode);
-        };
-    };
-
-    getRequest.onerror = (event) => {
-        console.error('Get failed', event.target.errorCode);
-    };
-}
-
-function deleteExercise(id) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const deleteRequest = objectStore.delete(id);
-
-    deleteRequest.onsuccess = () => {
-        console.log(`Exercise with id ${id} deleted.`);
-        renderExercises(); // Re-render
-        hideModal('info-exercise-modal'); // Hide modal after deletion
-    };
-
-    deleteRequest.onerror = (event) => {
-        console.error('Delete failed', event.target.errorCode);
-    };
-}
-
-function addExercise(e) {
-    e.preventDefault();
-
-    const exercise = exerciseInput.value;
-    const sets = parseInt(setsInput.value);
-    const reps = parseInt(repsInput.value);
-    const weekday = weekdayInput.value;
-
-    if (!exercise || !sets || !reps || !weekday) {
-        console.error('Please fill in all fields');
-        return;
-    }
-
-    const newExercise = { exercise, sets, reps, weekday, isDone: false };
-    saveExerciseToDB(newExercise);
-}
-
-function saveExerciseToDB(exercise) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const addRequest = objectStore.add(exercise);
-
-    addRequest.onsuccess = () => {
-        console.log('Exercise added:', exercise);
-        renderExercises(); // Re-render
-    };
-
-    addRequest.onerror = (event) => {
-        console.error('Failed to save exercise:', event.target.errorCode);
-    };
-
-    exerciseInput.value = '';
-    setsInput.value = '';
-    repsInput.value = '';
-    weekdayInput.value = '';
-}
-
-function editExercise(exercise) {
-    editIdInput.value = exercise.id;
-    editExerciseInput.value = exercise.exercise;
-    editSetsInput.value = exercise.sets;
-    editRepsInput.value = exercise.reps;
-    editWeekdayInput.value = exercise.weekday;
-    editModal.classList.remove('hidden');
-}
-
-function saveEditedExercise(e) {
-    e.preventDefault();
-
-    const id = parseInt(editIdInput.value);
-    const exercise = editExerciseInput.value;
-    const sets = parseInt(editSetsInput.value);
-    const reps = parseInt(editRepsInput.value);
-    const weekday = editWeekdayInput.value;
-
-    if (!exercise || !sets || !reps || !weekday) {
-        console.error('Please fill in all fields');
-        return;
-    }
-
-    const updatedExercise = { id, exercise, sets, reps, weekday, isDone: false };
-    updateExerciseInDB(updatedExercise);
-}
-
-function updateExerciseInDB(exercise) {
-    const transaction = db.transaction('exercises', 'readwrite');
-    const objectStore = transaction.objectStore('exercises');
-
-    const updateRequest = objectStore.put(exercise);
-
-    updateRequest.onsuccess = () => {
-        console.log('Exercise updated:', exercise);
-        renderExercises(); // Re-render
-        editModal.classList.add('hidden');
-    };
-
-    updateRequest.onerror = (event) => {
-        console.error('Failed to update exercise:', event.target.errorCode);
-    };
-}
-
-function showExerciseInfo(exercise) {
-    if (infoDetails) {
-        infoDetails.innerHTML = `
-            <p><strong>Exercise:</strong> ${exercise.exercise}</p>
-            <p><strong>Sets:</strong> ${exercise.sets}</p>
-            <p><strong>Reps:</strong> ${exercise.reps}</p>
-            <p><strong>Weekday:</strong> ${exercise.weekday}</p>
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="info-isDone" ${exercise.isDone ? 'checked' : ''}>
-                <label class="form-check-label" for="info-isDone">Done</label>
-            </div>
-            <button type="button" class="w-full bg-red-500 text-white p-2 rounded mt-3" onclick="deleteExercise(${exercise.id})">Delete</button>
-        `;
-
-        const isDoneCheckbox = document.getElementById('info-isDone');
-        isDoneCheckbox.addEventListener('change', () => toggleExerciseDone(exercise.id, isDoneCheckbox.checked));
-
-        infoModal.classList.remove('hidden');
-    } else {
-        console.error("Info details element not found");
-    }
-}
-
-function updateNetworkStatus() {
-    const statusText = document.getElementById('status-text');
-    if (navigator.onLine) {
-        if (statusText) {
-            statusText.textContent = 'You are online';
-            statusText.classList.remove('text-red-500');
-            statusText.classList.add('text-green-500');
-        } else {
-            console.error("Status text element not found");
-        }
-    } else {
-        if (statusText) {
-            statusText.textContent = 'You are offline';
-            statusText.classList.remove('text-green-500');
-            statusText.classList.add('text-red-500');
-        } else {
-            console.error("Status text element not found");
-        }
-    }
 }
