@@ -1,102 +1,57 @@
 # Exercise Tracker
 
-## Table of Contents
-- [Description](#description)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Views](#views)
-- [Service Worker](#service-worker)
-- [Caching Strategy](#caching-strategy)
-- [Project Documentation](#project-documentation)
-- [Code Quality](#code-quality)
+A simple workout tracking app that works offline.
 
-## Description
+## Live
+[Click here](https://davilex.surge.sh)
 
-The Exercise Tracker is a progressive web application (PWA) that allows users to add, edit, delete, and view exercises. It is installable, uses native device features, works offline, and provides a consistent and responsive user experience across different devices.
+## What does it do?
 
-## Features
+- Add exercises with sets and reps for different days,
+- Edit exercises,
+- Mark exercises as done,
+- Delete exercises you don't want,
+- Works offline,
+- Can be installed on your phone homescreen
 
-1. **Installable**: Users can install the application on their device's home screen.
-2. **Native Device Features**: Access to native device features such as push notifications and geolocation (if applicable).
-3. **Offline Functionality**: The application works offline using Service Workers and the Cache API.
-4. **Multiple Views**: The application has at least three views with a consistent flow.
-5. **Hosted Online**: The application is hosted on a server and runs over a secure HTTPS connection.
-6. **Responsive Design**: The application adjusts to different screen sizes.
-7. **Performance**: The application loads quickly and runs smoothly.
-
-## Installation
-
-To install the application, follow these steps:
-1. Open the application in your web browser.
-2. Click on the "Add to Home Screen" prompt or use the share menu on iOS devices to add the app to your home screen.
-
-## Usage
+## How to Use It
 
 ### Adding an Exercise
-1. Fill out the exercise form with the exercise name, sets, reps, and weekday.
-2. Click the "Add Exercise" button to add the exercise to the list.
+1. Type the exercise name (e.g., "Push-ups")
+2. Enter how many sets you'll do
+3. Enter how many reps per set
+4. Choose which day of the week
+5. Click "Add Exercise"
 
-### Viewing Exercises
-1. Navigate through the days of the week to view the exercises for each day.
-2. Click on the "Info" button to view detailed information about an exercise.
+### Editing exercise
+1. Find your exercise in the list
+2. Click the "Edit" button
+3. Change what you need
+4. Click "Save"
 
-### Editing an Exercise
-1. Click on the "Edit" button next to an exercise.
-2. Modify the exercise details in the edit form and click "Save Changes."
+### Marking as Done
+1. Click "Info"
+2. Check the "Done" box
+- The exercise will turn green to show it's completed
 
 ### Deleting an Exercise
-1. Click on the "Info" button next to an exercise.
-2. Click the "Delete" button in the exercise info modal to delete the exercise.
+1. Click "Info",
+2. Click the "Delete" button at the bottom
 
-### Offline Functionality
-1. The application will inform you if you are offline and still allow you to add, edit, and view exercises.
+## Installing on Your Phone
+### IOS/Android:
+1. On Chrome or any browser, simply click share button, then add to home screen.
 
-## Views
+## Features!
+- Works without internet
+- Saves all your exercises in app itself
+- Shows if you're online or offline
 
-1. **Home View**: Displays the form to add exercises and the list of exercises for each weekday.
-2. **Edit View**: Provides a modal to edit exercise details.
-3. **Info View**: Shows detailed information about an exercise and allows deletion.
-
-## Service Worker
-
-The application uses a service worker to cache resources and provide offline functionality. The service worker caches the necessary assets and fetches them from the cache when the user is offline.
-
-## Caching Strategy
-
-The service worker uses a caching strategy that caches all static resources and fetches them from the cache when offline. Dynamic content such as exercises is fetched from the network and updated in the cache.
-
-## Project Documentation
-
-### Function Explanations
-
-1. **renderExercises()**: Fetches exercises from IndexedDB and displays them grouped by weekdays.
-2. **enableDragAndDrop()**: Enables drag-and-drop functionality for reordering exercises.
-3. **handleDragStart()**: Handles the start of a drag event.
-4. **handleDragOver()**: Handles the drag over event to allow dropping.
-5. **handleDrop()**: Handles the drop event to reorder exercises.
-6. **handleDragEnd()**: Handles the end of a drag event.
-7. **toggleExerciseDone()**: Toggles the completion status of an exercise.
-8. **deleteExercise()**: Deletes an exercise from IndexedDB and updates the view.
-9. **addExercise()**: Adds a new exercise to IndexedDB and updates the view.
-10. **saveExerciseToDB()**: Saves an exercise to IndexedDB.
-11. **editExercise()**: Fills the edit form with the selected exercise details.
-12. **saveEditedExercise()**: Saves the edited exercise details to IndexedDB.
-13. **updateExerciseInDB()**: Updates an exercise in IndexedDB.
-14. **showExerciseInfo()**: Displays detailed information about an exercise in a modal.
-15. **updateNetworkStatus()**: Updates the network status and informs the user of connectivity changes.
-
-### Service Worker
-
-The service worker is responsible for caching static assets and providing offline support. It uses the `Cache API` to store resources and serves them from the cache when the network is unavailable.
-
-## Code Quality
-
-The code follows best practices and is well-commented to ensure readability and maintainability. The project structure is organized, and the code is modular to future enhancements.
-
-## Conclusion
-
-The Exercise Tracker is a robust PWA that provides a seamless user experience with offline capabilities, native device feature integration, and responsive design. It is designed to be installable and provides clear documentation .
+## How It's Built
+- HTML 
+- CSS (with Tailwind) 
+- Js
+- IndexedDB for saving your exercises
+- Service Worker for offline purposes
 
 ---
-
