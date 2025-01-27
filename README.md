@@ -43,7 +43,7 @@ A simple workout tracking app that works offline.
 1. On Chrome or any browser, simply click share button, then add to home screen.
 
 ## To-do
-IOS support
+IOS notification/vibration support
 ## Stack
 - HTML 
 - CSS (with Tailwind) 
