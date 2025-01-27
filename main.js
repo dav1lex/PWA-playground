@@ -113,7 +113,6 @@ function displayExercises(exercises) {
     days.forEach(day => {
         // Find exercises for this day
         const dayExercises = exercises.filter(ex => ex.weekday === day);
-
         if (dayExercises.length > 0) {
             html += `
                 <div class="border mb-4 rounded p-4 bg-white shadow-md">
@@ -126,14 +125,8 @@ function displayExercises(exercises) {
                                 <p><strong>#${index + 1}</strong></p>
                                 <p><strong>Exercise:</strong> ${exercise.exercise}</p>
                                 <p><strong>Sets × Reps:</strong> ${exercise.sets} × ${exercise.reps}</p>
-                                <button onclick="showEditForm(${exercise.id})" 
-                                        class="bg-blue-500 text-white px-2 py-1 rounded">
-                                    Edit
-                                </button>
-                                <button onclick="showExerciseInfo(${exercise.id})" 
-                                        class="bg-gray-500 text-white px-2 py-1 rounded">
-                                    Info
-                                </button>
+                                <button onclick="showEditForm(${exercise.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Edit</button>
+                                <button onclick="showExerciseInfo(${exercise.id})" class="bg-gray-500 text-white px-2 py-1 rounded">Info</button>
                             </div>
                         `).join('')}
                     </div>

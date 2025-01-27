@@ -49,3 +49,5 @@ self.addEventListener('activate', event => {
         })
     );
 });
+//doesnt wokr offline
+//notification, camera
