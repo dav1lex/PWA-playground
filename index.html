@@ -4,84 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exercise Tracker</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+    <meta name="description" content="A simple exercise tracking PWA">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512x512.png">
+    <link rel="apple-touch-icon" href="./icons/icon-192x192.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        /* Banner */
-        .banner {
-            padding: 10px;
-            text-align: center;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-
-        .install-banner {
-            background-color: #ffeb3b;
-            color: #000;
-        }
-
-        /* Form */
-        .input-group {
-            display: grid;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        @media (min-width: 768px) {
-            .input-group {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-        }
-
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
+    <link href="styles.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
 <header class="bg-blue-600 text-white p-4 text-center">
     <h1 class="text-2xl font-bold">Exercise Tracker</h1>
 </header>
-
 <main class="container mx-auto p-4">
-    <!-- Banner-->
-    <div id="ios-install-banner" class="banner install-banner hidden">
-        To install: tap "Share" and select "Add to Home Screen"
-    </div>
-
-    <div id="network-status" class="text-center p-2">
+    <div class="text-center p-2 mb-4">
         <span id="status-text" class="text-green-500">Online</span>
     </div>
 
-    <!-- Add Exercise Form -->
-    <div class="bg-white rounded p-4 shadow mb-4">
+    <div class="text-center p-2 mb-4">
+        <button id="notification-permission-btn" class="bg-blue-500 text-white px-4 py-2 rounded hidden">
+            force enable notifications
+        </button>
+    </div>
+
+    <section class="bg-white rounded p-4 shadow mb-4">
         <h2 class="text-xl font-bold mb-4">Add Exercise</h2>
-
         <form id="exercise-form">
-            <div class="input-group">
-                <input type="text" id="exercise" placeholder="Exercise Name"
-                       class="p-2 border rounded" required>
-
-                <input type="number" id="sets" placeholder="Sets"
-                       class="p-2 border rounded" required>
-
-                <input type="number" id="reps" placeholder="Reps"
-                       class="p-2 border rounded" required>
-
+            <div class="grid gap-4 md:grid-cols-4">
+                <input type="text" id="exercise" placeholder="Exercise Name" class="p-2 border rounded" required>
+                <input type="number" id="sets" placeholder="Sets" class="p-2 border rounded" required min="1">
+                <input type="number" id="reps" placeholder="Reps" class="p-2 border rounded" required min="1">
                 <select id="weekday" class="p-2 border rounded" required>
                     <option value="">Select Day</option>
                     <option value="Monday">Monday</option>
@@ -93,37 +47,27 @@
                     <option value="Sunday">Sunday</option>
                 </select>
             </div>
-
-            <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">
+            <button type="submit" class="w-full bg-green-500 text-white p-2 rounded mt-4">
                 Add Exercise
             </button>
         </form>
-    </div>
+    </section>
 
-    <!-- List -->
-    <div class="bg-white rounded p-4 shadow">
+    <section class="bg-white rounded p-4 shadow">
         <h2 class="text-xl font-bold mb-4">My Exercises</h2>
         <div id="exercise-weekdays"></div>
-    </div>
+    </section>
 
-    <!-- edit modal -->
     <div id="edit-exercise-modal" class="modal hidden">
-        <div class="bg-white rounded p-4 w-full max-w-md mx-4">
+        <div class="modal-content bg-white rounded p-4 w-full max-w-md mx-4">
             <h3 class="text-xl font-bold mb-4">Edit Exercise</h3>
-
             <form id="edit-exercise-form">
                 <input type="hidden" id="edit-id">
-
                 <div class="space-y-4">
-                    <input type="text" id="edit-exercise" placeholder="Exercise Name"
-                           class="w-full p-2 border rounded" required>
-
-                    <input type="number" id="edit-sets" placeholder="Sets"
-                           class="w-full p-2 border rounded" required>
-
-                    <input type="number" id="edit-reps" placeholder="Reps"
-                           class="w-full p-2 border rounded" required>
-
+                    <input type="text" id="edit-exercise" placeholder="Exercise Name" class="w-full p-2 border rounded"
+                           required>
+                    <input type="number" id="edit-sets" placeholder="Sets" class="w-full p-2 border rounded" required min="1">
+                    <input type="number" id="edit-reps" placeholder="Reps" class="w-full p-2 border rounded" required min="1">
                     <select id="edit-weekday" class="w-full p-2 border rounded" required>
                         <option value="">Select Day</option>
                         <option value="Monday">Monday</option>
@@ -135,56 +79,36 @@
                         <option value="Sunday">Sunday</option>
                     </select>
                 </div>
-
                 <div class="mt-4 space-y-2">
-                    <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded">
-                        Save Changes
-                    </button>
-                    <button type="button" onclick="hideModal('edit-exercise-modal')"
-                            class="w-full bg-gray-500 text-white p-2 rounded">
-                        Cancel
+                    <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded">Save Changes</button>
+                    <button type="button" onclick="UI.closeModal('edit-exercise-modal')"
+                            class="w-full bg-gray-500 text-white p-2 rounded">Cancel
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- unfo modal -->
     <div id="info-exercise-modal" class="modal hidden">
-        <div class="bg-white rounded p-4 w-full max-w-md mx-4">
+        <div class="modal-content bg-white rounded p-4 w-full max-w-md mx-4">
             <h3 class="text-xl font-bold mb-4">Exercise Details</h3>
             <div id="info-exercise-details"></div>
-            <button onclick="hideModal('info-exercise-modal')"
-                    class="w-full bg-gray-500 text-white p-2 rounded mt-4">
-                Close
+            <button onclick="UI.closeModal('info-exercise-modal')"
+                    class="w-full bg-gray-500 text-white p-2 rounded mt-4">Close
             </button>
         </div>
     </div>
 </main>
-
 <footer class="bg-blue-400 text-white p-4 text-center mt-8">
     <p>Exercise Tracker &copy; 2025</p>
 </footer>
 
-<script>
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(reg => console.log('Service Worker registered' + reg))
-                .catch(err => console.log('Service Worker registration failed' + err));
-        });
-    }
-
-    // modal functions
-    function showModal(modalId) {
-        document.getElementById(modalId).classList.add('show');
-    }
-
-    function hideModal(modalId) {
-        document.getElementById(modalId).classList.remove('show');
-    }
-</script>
-<script src="main.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/elements.js"></script>
+<script src="js/database.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

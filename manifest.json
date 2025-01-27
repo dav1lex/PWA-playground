@@ -2,31 +2,32 @@
   "name": "Exercise Tracker",
   "short_name": "Exercise Tracker",
   "description": "Track your Exercises efficiently.",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4a90e2",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "./icons/icon-192x192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "./icons/icon-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "screenshots": [
     {
-      "src": "icons/scr1.jpeg",
+      "src": "./icons/scr1.jpeg",
       "sizes": "320x640",
       "type": "image/jpeg",
       "form_factor": "wide"
     },
     {
-      "src": "icons/scr2.jpeg",
+      "src": "./icons/scr2.jpeg",
       "sizes": "640x320",
       "type": "image/jpeg",
       "form_factor": "narrow"

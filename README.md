@@ -9,8 +9,8 @@ A simple workout tracking app that works offline.
 
 - Add exercises with sets and reps for different days,
 - Edit exercises,
-- Mark exercises as done,
-- Delete exercises you don't want,
+- Mark exercises as completed,
+- Delete exercises ,
 - Works offline,
 - Can be installed on your phone homescreen
 
@@ -42,16 +42,13 @@ A simple workout tracking app that works offline.
 ### IOS/Android:
 1. On Chrome or any browser, simply click share button, then add to home screen.
 
-## Features!
-- Works without internet
-- Saves all your exercises in app itself
-- Shows if you're online or offline
-
-## How It's Built
+## To-do
+IOS support
+## Stack
 - HTML 
 - CSS (with Tailwind) 
 - Js
-- IndexedDB for saving your exercises
+- IndexedDB 
 - Service Worker for offline purposes
 
 ---
